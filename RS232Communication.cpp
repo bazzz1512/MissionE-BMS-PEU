@@ -40,12 +40,14 @@ void RS232Communication::initialize() {
 }
 
 bool RS232Communication::check_data(uint8_t* data){
+    // Check if there is data available
     if (hardserial.available() < 14) {
         return false;
     }
 //    Serial.println("Data available");
     uint8_t read_bytes_amount = 0;
 
+    // Wait for 'A' to be received
     unsigned long start_time = millis();
     while (hardserial.read() != 'A') {
         if (millis() - start_time > TIMEOUT_MS) {
@@ -54,6 +56,7 @@ bool RS232Communication::check_data(uint8_t* data){
         }
     }
 
+    // Check the status byte
     char status = hardserial.read();
     switch (status) {
         case 'Z':
@@ -71,6 +74,7 @@ bool RS232Communication::check_data(uint8_t* data){
             return false;
     }
 
+    // Wait for the rest of the data to be received
     start_time = millis();  // Reset the start time
     while (hardserial.available() < read_bytes_amount-2) {
         if (millis() - start_time > TIMEOUT_MS) {
@@ -79,12 +83,15 @@ bool RS232Communication::check_data(uint8_t* data){
         }
     }
 
+    // Parse the data
     data[0] = 'A';
     data[1] = status;
     while (hardserial.available() < read_bytes_amount-2);
     for (uint8_t i = 2; i < read_bytes_amount; i++) {
         data[i] = hardserial.read();
     }
+
+    // Check the checksum
     uint8_t checksum = data[0];
     for (uint8_t i = 1; i < read_bytes_amount-1; i++) {
         checksum ^= data[i];

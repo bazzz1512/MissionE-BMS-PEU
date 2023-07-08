@@ -16,6 +16,7 @@ sCANReceive::sCANReceive(){
 }
 
 bool sCANReceive::receive_data(uint32_t id, uint8_t *data) {
+    // TODO: Add checksum check
     switch (id) {
         case 0x6B0: {
             // Extract MaxPack (2 bytes)
