@@ -45,7 +45,7 @@ void PeuData_Send::set_data(uint8_t *data) {
     AuxVal = data[7];
 }
 
-void PeuData_Send::set_data(uint8_t VBLimH, uint8_t VBLimL, uint8_t CMD, int8_t LineLim, uint8_t IBatLim, uint8_t UPSV,
+void PeuData_Send::set_data(uint8_t VBLimH, uint8_t VBLimL, uint8_t CMD, uint8_t LineLim, uint8_t IBatLim, uint8_t UPSV,
                             uint8_t AuxCMD, uint8_t AuxVal) {
     this->VBLimH = VBLimH;
     this->VBLimL = VBLimL;
@@ -58,11 +58,12 @@ void PeuData_Send::set_data(uint8_t VBLimH, uint8_t VBLimL, uint8_t CMD, int8_t 
 }
 
 uint8_t PeuData_Send::xor_checksum() {
-    return static_cast<uint8_t>('A') ^ static_cast<uint8_t>('z') ^ VBLimH ^ VBLimL ^ CMD ^ LineLim ^ IBatLim ^ UPSV ^ AuxCMD ^ AuxVal;
+    return static_cast<uint8_t>('A') ^ static_cast<uint8_t>('z') ^ VBLimH ^ VBLimL ^ CMD ^ LineLim ^ IBatLim ^ UPSV ^
+           AuxCMD ^ AuxVal;
 }
 
 uint8_t *PeuData_Send::get_data() {
-    static uint8_t data[11] = {'A', 'z', VBLimH, VBLimL, CMD, static_cast<uint8_t>(LineLim), IBatLim, UPSV, AuxCMD,
+    static uint8_t data[11] = {'A', 'z', VBLimH, VBLimL, CMD, LineLim, IBatLim, UPSV, AuxCMD,
                                AuxVal, xor_checksum()};
     return data;
 }

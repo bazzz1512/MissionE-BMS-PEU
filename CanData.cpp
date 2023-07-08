@@ -5,7 +5,7 @@
 #include "CanData.h"
 #include <Arduino.h>
 
-sCANReceive::sCANReceive(){
+sCANReceive::sCANReceive() {
     MaxPack = 0;
     MinPack = 0;
     PackSOC = 0;

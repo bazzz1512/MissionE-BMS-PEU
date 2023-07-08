@@ -27,9 +27,10 @@ RS232Communication rs232(RX_PIN, TX_PIN); //
 
 // Create timestamp variable
 unsigned long previousMillis_send_data = 0;
+unsigned long start_program_time = 0;
 
 // Select drive mode
-DriveModes drive_mode = DriveModes::Drive;
+DriveModes drive_mode = DriveModes::Charge;
 
 // Function to print an array
 void printArray(const uint8_t *array, uint8_t length) {
@@ -93,6 +94,7 @@ void setup() {
     rs232.initialize();
     // Initialize timestamp variable
     previousMillis_send_data = millis();
+    start_program_time = millis();
 }
 
 //——————————————————————————————————————————————————————————————————————————————
@@ -107,8 +109,8 @@ void loop() {
         can.receive(frame);
         if (can_receive_data.receive_data(frame.id, frame.data)) {
             if (DEBUG) {
-                Serial.println("Received data");
-                can_receive_data.print_data();
+                Serial.println("Received CAN data");
+                // can_receive_data.print_data();
             }
         } else {
             if (DEBUG) {
@@ -128,10 +130,6 @@ void loop() {
     uint8_t data_buffer[34] = {0};
     // CHeck available data on hardware serial
     if (rs232.check_data(data_buffer)) {
-        if (DEBUG) {
-            Serial.println("Received data");
-            printArray(data_buffer, 34);
-        }
         if (data_buffer[1] == 'X') {
             peu_data.set_ax(&data_buffer[2]);
         } else if (data_buffer[1] == 'Y') {
@@ -145,7 +143,7 @@ void loop() {
             Serial.println("Error: Unknown data type in received data");
         }
         if (DEBUG) {
-            Serial.println("Received parsed data: ");
+            Serial.println("Received RS232 parsed data: ");
             peu_data.print_data();
         }
     }
@@ -170,7 +168,7 @@ void loop() {
                 // peu_data_send.CMD |= 1 << 1; // LP
                 peu_data_send.CMD |= 1 << 5;
 
-                peu_data_send.LineLim = 5;
+                peu_data_send.LineLim = 128;
                 peu_data_send.UPSV = 230;
                 peu_data_send.AuxCMD = 0;
                 peu_data_send.AuxVal = 0;
@@ -184,7 +182,7 @@ void loop() {
                 // peu_data_send.CMD |= 1 << 1; // LP
                 peu_data_send.CMD |= 1 << 5;
 
-                peu_data_send.LineLim = 16;
+                peu_data_send.LineLim = 32;
                 peu_data_send.UPSV = 230;
                 peu_data_send.AuxCMD = 0;
                 peu_data_send.AuxVal = 0;
@@ -192,26 +190,59 @@ void loop() {
 
             case DriveModes::Charge:
                 // TODO: Change
-                peu_data_send.VBLimH = 86; // Offset 390 V
-                peu_data_send.VBLimL = 202; // Offset 356 V
+                // Get current time
+                unsigned long currentMillis = millis();
+                // Check if 10 seconds have passed
+                if (currentMillis - start_program_time <= 5000) {
+                    // Serial.println("Changing charging mode");
+                    // Save the last time a message was sent
+                    peu_data_send.VBLimH = 225;
+                    peu_data_send.VBLimL = 0;
 
-                peu_data_send.CMD = 0;
-                // peu_data_send.CMD |= 1 << 1; // LP
-                peu_data_send.CMD |= 1 << 5;
+                    peu_data_send.CMD = 8;
+                    // peu_data_send.CMD |= 1 << 5; // LP
+//                    peu_data_send.CMD |= 1 << 3; // SS
 
-                // Mode dependent
-                peu_data_send.LineLim = 32;
 
-                // Constant
-                peu_data_send.UPSV = 230;
-                peu_data_send.AuxCMD = 0;
-                peu_data_send.AuxVal = 0;
+                    // Mode dependent
+                    peu_data_send.LineLim = 255;
+                    peu_data_send.IBatLim = 58;
+
+                    // Constant
+                    peu_data_send.UPSV = 0;
+                    peu_data_send.AuxCMD = 0;
+                    peu_data_send.AuxVal = 0;
+                }
+                else {
+                    peu_data_send.VBLimH = 225;
+                    peu_data_send.VBLimL = 0;
+
+                    peu_data_send.CMD = 255;
+                    // peu_data_send.CMD |= 1 << 5; // LP
+                    // peu_data_send.CMD |= 1 << 3; // SS
+
+
+
+                    // Mode dependent
+                    peu_data_send.LineLim = 250;
+                    peu_data_send.IBatLim = 58;
+
+                    // Constant
+                    peu_data_send.UPSV = 0;
+                    peu_data_send.AuxCMD = 0;
+                    peu_data_send.AuxVal = 0;
+                }
                 break;
 
         }
         // Create data array from PeuData_Send struct
+        if (DEBUG){
+          Serial.println("Sending RS232 data to PEU");
+          // peu_data_send.print_data();
+        }
+
         uint8_t *data = peu_data_send.get_data();
-        // Send data
+        printArray(data, 11);
         rs232.send_data(data, 11);
     }
 }

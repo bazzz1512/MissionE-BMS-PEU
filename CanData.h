@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-struct sCANReceive{
+struct sCANReceive {
     uint16_t MaxPack;
     uint16_t MinPack;
     uint8_t PackSOC;
@@ -17,7 +17,9 @@ struct sCANReceive{
     uint8_t J_ACCurrent;
 
     sCANReceive();
+
     bool receive_data(uint32_t id, uint8_t *data);
+
     void print_data();
 };
 

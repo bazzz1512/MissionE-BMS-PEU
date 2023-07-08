@@ -21,7 +21,7 @@ struct RS232Communication {
 
     void initialize();
 
-    bool check_data(uint8_t* data);
+    bool check_data(uint8_t *data);
 };
 
 #endif
