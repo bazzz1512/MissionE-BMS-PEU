@@ -196,16 +196,16 @@ void loop() {
                 if (currentMillis - start_program_time <= 5000) {
                     // Serial.println("Changing charging mode");
                     // Save the last time a message was sent
-                    peu_data_send.VBLimH = 225;
+                    peu_data_send.VBLimH = 183;
                     peu_data_send.VBLimL = 0;
 
-                    peu_data_send.CMD = 8;
+                    peu_data_send.CMD = 0;
                     // peu_data_send.CMD |= 1 << 5; // LP
 //                    peu_data_send.CMD |= 1 << 3; // SS
 
 
                     // Mode dependent
-                    peu_data_send.LineLim = 255;
+                    peu_data_send.LineLim = 254;
                     peu_data_send.IBatLim = 58;
 
                     // Constant
@@ -214,17 +214,17 @@ void loop() {
                     peu_data_send.AuxVal = 0;
                 }
                 else {
-                    peu_data_send.VBLimH = 225;
+                    peu_data_send.VBLimH = 183;
                     peu_data_send.VBLimL = 0;
 
-                    peu_data_send.CMD = 255;
+                    peu_data_send.CMD = 8;
                     // peu_data_send.CMD |= 1 << 5; // LP
                     // peu_data_send.CMD |= 1 << 3; // SS
 
 
 
                     // Mode dependent
-                    peu_data_send.LineLim = 250;
+                    peu_data_send.LineLim = 244;
                     peu_data_send.IBatLim = 58;
 
                     // Constant
@@ -244,5 +244,7 @@ void loop() {
         uint8_t *data = peu_data_send.get_data();
         printArray(data, 11);
         rs232.send_data(data, 11);
+        delete[] data;
+
     }
 }

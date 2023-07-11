@@ -63,7 +63,7 @@ uint8_t PeuData_Send::xor_checksum() {
 }
 
 uint8_t *PeuData_Send::get_data() {
-    static uint8_t data[11] = {'A', 'z', VBLimH, VBLimL, CMD, LineLim, IBatLim, UPSV, AuxCMD,
+    uint8_t* data = new uint8_t[11] {'A', 'z', VBLimH, VBLimL, CMD, LineLim, IBatLim, UPSV, AuxCMD,
                                AuxVal, xor_checksum()};
     return data;
 }
