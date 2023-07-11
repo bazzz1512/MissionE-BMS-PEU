@@ -192,7 +192,7 @@ void loop() {
                 // TODO: Change
                 // Get current time
                 unsigned long currentMillis = millis();
-                // Check if 10 seconds have passed
+                // Check if 5 seconds have passed
                 if (currentMillis - start_program_time <= 5000) {
                     // Serial.println("Changing charging mode");
                     // Save the last time a message was sent
