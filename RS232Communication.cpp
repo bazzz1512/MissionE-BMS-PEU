@@ -22,18 +22,6 @@ void RS232Communication::receive_data(uint8_t *data, int len) {
     }
 }
 
-int RS232Communication::check_and_receive_data(uint8_t *data, int max_len) {
-
-    for (int i = 0; i < max_len; i++) {
-        if (hardserial.available()) {
-            data[i] = hardserial.read();
-        } else {
-            return i;
-        }
-    }
-    return true;
-}
-
 void RS232Communication::initialize() {
     hardserial.begin(baudrate);
     Serial.println("Hardserial Initialized");
