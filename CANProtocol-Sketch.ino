@@ -10,7 +10,7 @@
 #define QUARTZ_FREQUENCY 8UL * 1000UL * 1000UL
 
 // Set to true to enable debug prints
-#define DEBUG false
+#define DEBUG true
 
 static const uint8_t MCP2515_CS = A0;  // CS input of MCP2515 (adapt to your design)
 static const uint8_t MCP2515_INT = A1;  // INT output of MCP2515 (adapt to your design)
@@ -103,14 +103,18 @@ void loop() {
     if (DEBUG)
         Serial.println("Starting loop");
 
+
     // Check if data is available on the CAN bus
     if (can.available()) {
         CANMessage frame;
         can.receive(frame);
         if (can_receive_data.receive_data(frame.id, frame.data)) {
+            drive_mode = determine_drive_mode((PlugStateModes) can_receive_data.J_PlugState);
             if (DEBUG) {
                 Serial.println("Received CAN data");
-                // can_receive_data.print_data();
+                can_receive_data.print_data();
+                print_drive_mode(drive_mode);
+
             }
         } else {
             if (DEBUG) {
@@ -161,14 +165,15 @@ void loop() {
         // Set data to send
         switch (drive_mode) {
             case DriveModes::Drive:
-                peu_data_send.VBLimH = 86; // Offset 390 V
-                peu_data_send.VBLimL = 202; // Offset 356 V
+                peu_data_send.VBLimH = 57; // Offset 390 V
+                peu_data_send.VBLimL = 192; // Offset 356 V
 
                 peu_data_send.CMD = 0;
                 // peu_data_send.CMD |= 1 << 1; // LP
-                peu_data_send.CMD |= 1 << 5;
+//                peu_data_send.CMD |= 1 << 5;
 
-                peu_data_send.LineLim = 128;
+                peu_data_send.LineLim = 0;
+                peu_data_send.IBatLim = (uint8_t) (floor((float) can_receive_data.PackDCL / 10));
                 peu_data_send.UPSV = 230;
                 peu_data_send.AuxCMD = 0;
                 peu_data_send.AuxVal = 0;
@@ -189,56 +194,32 @@ void loop() {
                 break;
 
             case DriveModes::Charge:
-                // TODO: Change
-                // Get current time
-                unsigned long currentMillis = millis();
-                // Check if 5 seconds have passed
-                if (currentMillis - start_program_time <= 5000) {
-                    // Serial.println("Changing charging mode");
-                    // Save the last time a message was sent
-                    peu_data_send.VBLimH = 183;
-                    peu_data_send.VBLimL = 0;
+                peu_data_send.VBLimH = 201;
+                peu_data_send.VBLimL = 175;
 
-                    peu_data_send.CMD = 0;
-                    // peu_data_send.CMD |= 1 << 5; // LP
+                // TODO: Check 66 or 56
+                peu_data_send.CMD = 56;
+                // peu_data_send.CMD |= 1 << 5; // LP
+                // peu_data_send.CMD |= 1 << 4; // 50 Hz
 //                    peu_data_send.CMD |= 1 << 3; // SS
 
 
-                    // Mode dependent
-                    peu_data_send.LineLim = 254;
-                    peu_data_send.IBatLim = 58;
+                // Mode dependent
+                peu_data_send.LineLim = (256 - (uint8_t)(floor((float)can_receive_data.J_ACCurrent * 0.93))) % 256;
+                peu_data_send.IBatLim = (uint8_t) (round((float) can_receive_data.PackCCL / 10));
 
-                    // Constant
-                    peu_data_send.UPSV = 0;
-                    peu_data_send.AuxCMD = 0;
-                    peu_data_send.AuxVal = 0;
-                }
-                else {
-                    peu_data_send.VBLimH = 183;
-                    peu_data_send.VBLimL = 0;
+                // Constant
+                peu_data_send.UPSV = 230;
+                peu_data_send.AuxCMD = 0;
+                peu_data_send.AuxVal = 0;
 
-                    peu_data_send.CMD = 8;
-                    // peu_data_send.CMD |= 1 << 5; // LP
-                    // peu_data_send.CMD |= 1 << 3; // SS
-
-
-
-                    // Mode dependent
-                    peu_data_send.LineLim = 244;
-                    peu_data_send.IBatLim = 58;
-
-                    // Constant
-                    peu_data_send.UPSV = 0;
-                    peu_data_send.AuxCMD = 0;
-                    peu_data_send.AuxVal = 0;
-                }
                 break;
 
         }
         // Create data array from PeuData_Send struct
-        if (DEBUG){
-          Serial.println("Sending RS232 data to PEU");
-          // peu_data_send.print_data();
+        if (DEBUG) {
+            Serial.println("Sending RS232 data to PEU");
+            // peu_data_send.print_data();
         }
 
         uint8_t *data = peu_data_send.get_data();

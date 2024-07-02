@@ -18,7 +18,7 @@ sCANReceive::sCANReceive() {
 bool sCANReceive::receive_data(uint32_t id, uint8_t *data) {
     // TODO: Add checksum check
     switch (id) {
-        case 0x6B0: {
+        case Frame1: {
             // Extract MaxPack (2 bytes)
             MaxPack = (data[0] << 8) | data[1];
 
@@ -34,9 +34,9 @@ bool sCANReceive::receive_data(uint32_t id, uint8_t *data) {
             // Update successful
             return true;
         }
-        case 0x6B1: {
-            // Extract PackDCL (4 bytes)
-            PackDCL = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
+        case Frame2: {
+            // Extract PackDCL (2 bytes)
+            PackDCL = (data[0] << 8) | data[1];
 
             // Extract PackCCL (1 byte)
             PackCCL = data[4];
